@@ -1,14 +1,12 @@
 package com.knoldus
 
 import java.io.File
-
 import akka.actor.ActorRef
 import akka.util.Timeout
-
 import scala.concurrent.duration._
 import scala.concurrent.Future
 import akka.pattern.ask
-
+import scala.language.postfixOps
 import scala.concurrent.ExecutionContext.Implicits.global
 
 /**

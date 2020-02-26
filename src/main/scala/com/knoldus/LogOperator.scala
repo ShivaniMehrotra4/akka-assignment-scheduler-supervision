@@ -9,7 +9,7 @@ import scala.io.Source
 /**
  * The class LogActor provides Actor functionality.
  */
-class LogActor extends Actor {
+class LogOperator extends Actor {
   var numOfErrors = 0
   var numOfWarnings = 0
   var numOfInfo = 0

@@ -17,7 +17,7 @@ class Supervisor extends Actor with ActorLogging {
   override def receive: Receive = {
 
     case path: String =>
-      val myActor = context.actorOf(RoundRobinPool(Constants.child).props(Props[LogActor]).withDispatcher("fixed-thread-pool"))
+      val myActor = context.actorOf(RoundRobinPool(Constants.child).props(Props[LogOperator]).withDispatcher("fixed-thread-pool"))
       val listOfFiles = s.getListOfFile(path).map(_.toString)
       val futureList = s.getFutureOfCountItems(listOfFiles, myActor, List())
 
@@ -26,7 +26,7 @@ class Supervisor extends Actor with ActorLogging {
 
       val avgResult = s.calcAverage(finalResult, listOfFiles.length)
       val finalAvgResult = Future.sequence(avgResult)
-      finalAvgResult.map(av=>log.info(s"$av"))
+      finalAvgResult.map(av => log.info(s"$av"))
 
   }
 
