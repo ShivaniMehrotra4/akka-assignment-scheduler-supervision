@@ -1,32 +1,36 @@
 package com.knoldus
 
 import akka.actor.SupervisorStrategy.{Escalate, Stop}
-import akka.actor.{Actor, ActorKilledException, DeathPactException, OneForOneStrategy, Props, SupervisorStrategy}
+import akka.actor.{Actor, ActorKilledException, ActorLogging, DeathPactException, OneForOneStrategy, Props, SupervisorStrategy}
 import akka.routing.RoundRobinPool
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class Supervisor extends Actor {
+/**
+ * This class provides basic Actor functionality.
+ * It calls functions and prints the final results with the help of Logging technique.
+ */
+class Supervisor extends Actor with ActorLogging {
   val s = new Services
-  val rd = new ReadDirectory
+  var finalResult: Future[CountItems] = Future(CountItems(0, 0, 0))
 
   override def receive: Receive = {
-    case path =>
-      val myActor = context.actorOf(RoundRobinPool(Constants.child).props(Props[LogActor]).withDispatcher("fixed-thread-pool"))
-      val listOfFiles = rd.getListOfFile(path.toString).map(_.toString)
-      val x = s.getFutureOfCountItems(listOfFiles, myActor, List())
 
-      val futureWrappedSolution = Future.sequence(x).map(an => an.foldLeft(CountItems(0, 0, 0)) { (acc, y) => s.caseClassMembersAddition(acc, y) })
-      val finalResult = Await.result(futureWrappedSolution, 10 second)
-      println(finalResult)
+    case path: String =>
+      val myActor = context.actorOf(RoundRobinPool(Constants.child).props(Props[LogActor]).withDispatcher("fixed-thread-pool"))
+      val listOfFiles = s.getListOfFile(path).map(_.toString)
+      val futureList = s.getFutureOfCountItems(listOfFiles, myActor, List())
+
+      finalResult = Future.sequence(futureList).map(an => an.foldLeft(CountItems(0, 0, 0)) { (acc, elem) => s.caseClassMembersAddition(acc, elem) })
+      finalResult.map(ss => log.info(s"$ss"))
 
       val avgResult = s.calcAverage(finalResult, listOfFiles.length)
-      println(avgResult)
+      val finalAvgResult = Future.sequence(avgResult)
+      finalAvgResult.map(av=>log.info(s"$av"))
 
   }
 
-  override def supervisorStrategy: SupervisorStrategy = OneForOneStrategy(maxNrOfRetries = 5, withinTimeRange = 10 seconds) {
+  override def supervisorStrategy: SupervisorStrategy = OneForOneStrategy(Constants.maxNrOfRetries, Constants.withinTimeRange) {
     case _: ActorKilledException => Stop
     case _: DeathPactException => Stop
     case _: Exception => Escalate

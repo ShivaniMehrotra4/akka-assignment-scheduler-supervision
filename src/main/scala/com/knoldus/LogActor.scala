@@ -2,7 +2,6 @@ package com.knoldus
 
 import akka.actor.Actor
 import akka.pattern.pipe
-
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.io.Source
@@ -16,18 +15,18 @@ class LogActor extends Actor {
   var numOfInfo = 0
 
   override def receive: Receive = {
-    case fileName(file) =>
+    case FileName(file) =>
       val fSource = Source.fromFile(s"$file")
       val listOfLines = fSource.getLines().toList
-      val cObject = finder(listOfLines)
-      Future(cObject).pipeTo(sender())
+      val countCompleted = finder(listOfLines)
+      Future(countCompleted).pipeTo(sender())
   }
 
   /**
    * finder function finds Errors,Warnings and Information from each line of each file
    *
    * @param listOfLines - a list of Lines from input file
-   * @return - an object of newDatatructure case class containing counts of Errors,Warnings and Information
+   * @return - an object of CountItems case class containing counts of Errors,Warnings and Information
    */
   def finder(listOfLines: List[String]): CountItems = {
     listOfLines match {

@@ -1,11 +1,20 @@
 package com.knoldus
 
+import java.io.File
+
 import akka.actor.ActorRef
 import akka.util.Timeout
+
 import scala.concurrent.duration._
 import scala.concurrent.Future
 import akka.pattern.ask
 
+import scala.concurrent.ExecutionContext.Implicits.global
+
+/**
+ * This class provides all the services including calculating list of case class objects,
+ * addition of case class object's members and calculating average per file.
+ */
 class Services {
 
   /**
@@ -22,7 +31,7 @@ class Services {
     files match {
       case Nil => futureLst
       case head :: rest =>
-        val temp = (actorReference ? fileName(head)).mapTo[CountItems]
+        val temp = (actorReference ? FileName(head)).mapTo[CountItems]
         getFutureOfCountItems(rest, actorReference, temp :: futureLst)
     }
   }
@@ -45,10 +54,26 @@ class Services {
    * @param length - total number of files in the directory
    * @return - a list of type double containing average results
    */
-  def calcAverage(items: CountItems, length: Int): List[Double] = {
-    val err = items.countError / length
-    val warn = items.countWarnings / length
-    val info = items.countInfo / length
+  def calcAverage(items: Future[CountItems], length: Int): List[Future[Int]] = {
+    val err = items.map(a => a.countError / length)
+    val warn = items.map(b => b.countWarnings / length)
+    val info = items.map(c => c.countInfo / length)
     List(err, warn, info)
+  }
+
+  /**
+   * getListOfFile function returns the list of files in the directory
+   *
+   * @param pathName - directory path
+   * @return - list of files in that path
+   */
+  def getListOfFile(pathName: String): List[File] = {
+
+    val file = new File(pathName)
+    if (file.isDirectory) {
+      file.listFiles.toList
+    } else {
+      List[File]()
+    }
   }
 }
