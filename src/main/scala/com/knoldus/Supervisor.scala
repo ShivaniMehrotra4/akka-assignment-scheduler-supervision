@@ -5,7 +5,7 @@ import akka.actor.{Actor, ActorKilledException, ActorLogging, DeathPactException
 import akka.routing.RoundRobinPool
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
-
+import akka.pattern.pipe
 /**
  * This class provides basic Actor functionality.
  * It calls functions and prints the final results with the help of Logging technique.
@@ -25,7 +25,7 @@ class Supervisor extends Actor with ActorLogging {
       finalResult.map(ss => log.info(s"$ss"))
 
       val avgResult = s.calcAverage(finalResult, listOfFiles.length)
-      val finalAvgResult = Future.sequence(avgResult)
+      val finalAvgResult = Future.sequence(avgResult).pipeTo(sender())
       finalAvgResult.map(av => log.info(s"$av"))
 
   }

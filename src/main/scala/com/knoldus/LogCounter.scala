@@ -19,8 +19,6 @@ object LogCounter extends App {
 
   implicit val timeOut: Timeout = Timeout(5 seconds)
   val superActor = actorSystem.actorOf(Props[Supervisor], "superActor")
-  val cancellable = actorSystem.scheduler.scheduleWithFixedDelay(0 second, 5 minutes, superActor, path)
-
-  cancellable.cancel()
+  val cancellable = actorSystem.scheduler.scheduleWithFixedDelay(0 second, 10 seconds, superActor, path)
 
 }
